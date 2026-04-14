@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBTI Personality Test</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f5;
+            --card-bg: #ffffff;
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --primary: #000000;
+            --primary-hover: #27272a;
+            --btn-bg: #f4f4f5;
+            --btn-hover: #e4e4e7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        p { font-size: 16px; color: var(--text-muted); line-height: 1.5; }
+
+        .btn-main {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-main:hover { background-color: var(--primary-hover); }
+
+        /* Quiz Styles */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #e4e4e7;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .option-btn {
+            display: block;
+            width: 100%;
+            background-color: var(--btn-bg);
+            border: 2px solid transparent;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s;
+            color: var(--text-main);
+        }
+        .option-btn:hover { background-color: var(--btn-hover); }
+
+        /* Result Styles */
+        .result-img {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .result-title { font-size: 32px; margin: 10px 0; }
+        .result-intro { font-style: italic; font-weight: bold; margin-bottom: 20px;}
+        .result-desc { text-align: left; margin-bottom: 25px; }
+
+        /* Блок копирования кода */
+        .copy-container {
+            margin: 0 auto 20px auto;
+            padding: 15px;
+            background-color: #fef08a; /* Ярко-желтый фон для привлечения внимания */
+            border-radius: 12px;
+            border: 2px dashed #ca8a04;
+            position: relative;
+        }
+        .copy-label {
+            display: block;
+            font-size: 16px;
+            color: #854d0e;
+            margin-bottom: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .copy-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.1s;
+        }
+        .copy-box:active { transform: scale(0.98); }
+        .copy-box:hover { background: #fafafa; }
+        .res-code-text {
+            font-size: 28px;
+            font-weight: 900;
+            color: #000;
+            letter-spacing: 2px;
+        }
+        .copy-icon { font-size: 20px; }
+        
+        .copy-toast {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #22c55e;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(34, 197, 94, 0.3);
+        }
+        .copy-toast.show { opacity: 1; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Стартовый экран -->
+    <div id="start-screen" class="card">
+        <h1>Анализ личности</h1>
+        <p>Пройдите этот необычный, немного резкий, но очень точный тест из 30 вопросов, чтобы узнать свой истинный архетип.</p>
+        <button class="btn-main" onclick="startTest()">Начать тест</button>
+    </div>
+
+    <!-- Экран теста -->
+    <div id="quiz-screen" class="card hidden">
+        <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
+        <div id="question-counter" style="color: #71717a; font-size: 14px; margin-bottom: 10px; text-align: left;">Вопрос 1 / 30</div>
+        <div id="question-text" class="question-text">Текст вопроса</div>
+        <div id="options-container">
+            <!-- Кнопки генерируются через JS -->
+        </div>
+    </div>
+
+    <!-- Экран результата -->
+    <div id="result-screen" class="card hidden">
+        
+        <!-- НОВЫЙ БЛОК КОПИРОВАНИЯ -->
+        <div class="copy-container">
+            <span class="copy-label">Это скопировать в Собеку:</span>
+            <div class="copy-box" onclick="copyCodeManual()">
+                <span id="res-code" class="res-code-text">CODE</span>
+                <span class="copy-icon">📋</span>
+            </div>
+            <div id="copy-toast" class="copy-toast">Скопировано!</div>
+        </div>
+
+        <h1 class="result-title" id="res-title">Тип</h1>
+        <div class="result-intro" id="res-intro">"Цитата"</div>
+        <img id="res-img" class="result-img" src="" alt="Type Image">
+        <p class="result-desc" id="res-desc">Описание</p>
+        <button class="btn-main" onclick="location.reload()">Пройти заново</button>
+    </div>
+</div>
+
+<script>
+// --- БАЗА ДАННЫХ ВОПРОСОВ ---
+const questions = [
+    { text: "Я не просто неудачник, я джокер, я NPC. Никогда не был в отношениях. Я робкий, неуверенный в себе, а моя юность — это долгий плейлист воображаемых романтических сцен. Каждый день я представляю, как гуляю по улице с кем-то, живу как нормальный человек. А реальность? Я просто трачу ресурсы, без идеалов, без целей. Каждая шутка про неудачников заставляет меня хотеть плакать.", options: [{label: "Я плачу...", value: 1}, {label: "Что это вообще такое...", value: 2}, {label: "Это НЕ про меня!", value: 3}] },
+    { text: "Я недостаточно хорош. Люди вокруг меня все лучше, чем я.", options: [{label: "Правда", value: 1}, {label: "Иногда", value: 2}, {label: "Нет", value: 3}] },
+    { text: "Я очень четко знаю, какой я настоящий.", options: [{label: "Не согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Согласен", value: 3}] },
+    { text: "В жизни есть что-то, чего я искренне хочу достичь.", options: [{label: "Не согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Согласен", value: 3}] },
+    { text: "Я должен постоянно карабкаться вверх и становиться сильнее.", options: [{label: "Не согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Согласен", value: 3}] },
+    { text: "Мнения других людей, честно говоря, не имеют для меня большого значения.", options: [{label: "Не согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Согласен", value: 3}] },
+    { text: "Ваш партнер не отвечает более пяти часов и говорит, что у него расстройство желудка. Что вы думаете?", options: [{label: "Никто не сидит в туалете 5 часов. Наверное, что-то скрывает.", value: 1}, {label: "Буду колебаться между доверием и подозрением.", value: 2}, {label: "Может, он и правда ужасно себя чувствует сегодня.", value: 3}] },
+    { text: "В отношениях я часто беспокоюсь, что меня бросят.", options: [{label: "Да", value: 1}, {label: "Иногда", value: 2}, {label: "Нет", value: 3}] },
+    { text: "Клянусь небесами, я серьезно отношусь к каждым отношениям!", options: [{label: "Не совсем", value: 1}, {label: "Возможно?", value: 2}, {label: "Да, и я не шучу!", value: 3}] },
+    { text: "Ваш партнер уважительный, нежный, правильный, красноречивый, наблюдательный, умный, добрый, амбициозный, элегантный и абсурдно великолепный. Что будет дальше?", options: [{label: "Даже если он потрясающий, я все равно не погружусь в это слишком глубоко.", value: 1}, {label: "Где-то между вариантами А и В.", value: 2}, {label: "Я буду безумно дорожить им и, возможно, потеряю голову от любви.", value: 3}] },
+    { text: "После начала отношений ваш партнер становится крайне прилипчивым. Ваша честная реакция?", options: [{label: "На самом деле звучит здорово.", value: 1}, {label: "Мне без разницы.", value: 2}, {label: "Я бы предпочел сохранить личное пространство.", value: 3}] },
+    { text: "В любых отношениях я очень забочусь о личном пространстве.", options: [{label: "Я предпочитаю зависеть и чтобы зависели от меня.", value: 1}, {label: "Зависит от ситуации.", value: 2}, {label: "Да, абсолютно.", value: 3}] },
+    { text: "Большинство людей добрые.", options: [{label: "Честно говоря, злые сердца встречаются чаще, чем геморрой.", value: 1}, {label: "Может быть.", value: 2}, {label: "Да. Я предпочитаю верить, что хороших людей больше.", value: 3}] },
+    { text: "Вы идете по улице, и к вам подбегает невероятно очаровательная маленькая девочка и протягивает леденец. Ваша первая мысль?", options: [{label: "Это какая-то новая афера? Лучше уйду.", value: 1}, {label: "Полное недоумение. Буду чесать затылок.", value: 2}, {label: "Оу, какая она милая. Она дала мне леденец!", value: 3}] },
+    { text: "Скоро экзамены. В школе говорят, что вечерние занятия обязательны, но сегодня вечером вы уже пообещали крашу поиграть в игры вместе. Что вы сделаете?", options: [{label: "Пропущу занятия. Это же всего один вечер.", value: 1}, {label: "Попытаюсь отпроситься.", value: 2}, {label: "Экзамены близко. О чем вообще речь? Иду учиться.", value: 3}] },
+    { text: "Мне нравится нарушать условности, и я ненавижу быть в рамках.", options: [{label: "Согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Не согласен", value: 3}] },
+    { text: "Обычно я делаю вещи с определенной целью.", options: [{label: "Не согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Согласен", value: 3}] },
+    { text: "В один случайный день я понимаю, что жизнь вообще не имеет никакого чертова смысла. Люди — просто животные, движимые инстинктами и гормонами: голоден — ешь; сонный — спишь; возбужден — спариваешься.", options: [{label: "Именно так.", value: 1}, {label: "Может да, может нет.", value: 2}, {label: "Это чушь.", value: 3}] },
+    { text: "В основном я работаю ради прогресса и достижений, а не просто чтобы избежать проблем и рисков.", options: [{label: "Не согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Согласен", value: 3}] },
+    { text: "У вас запор, и вы сидите на унитазе уже 30 минут. Что больше похоже на вас?", options: [{label: "Посижу еще тридцать. Может, что-то произойдет.", value: 1}, {label: "Шлепну себя по заднице с криком: 'Давай, бесполезная задница, делай свою работу!'", value: 2}, {label: "Использую слабительное, чтобы поскорее с этим покончить.", value: 3}] },
+    { text: "Я принимаю решения довольно быстро и не люблю колебаться.", options: [{label: "Не согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Согласен", value: 3}] },
+    { text: "У этого вопроса нет условия. Выбирайте вслепую.", options: [{label: "После долгих раздумий, кажется, А?", value: 1}, {label: "Эм... может, Б?", value: 2}, {label: "В случае сомнений, выбирай В.", value: 3}] },
+    { text: "Когда кто-то говорит, что у вас 'сильная исполнительность', какая мысль ближе к правде?", options: [{label: "Я становлюсь безумно эффективным только в самую последнюю секунду...", value: 1}, {label: "Иногда, наверное.", value: 2}, {label: "Да. Дела должны двигаться вперед.", value: 3}] },
+    { text: "Когда я строю планы, ____", options: [{label: "жизнь обычно их обгоняет.", value: 1}, {label: "иногда я их выполняю, иногда нет.", value: 2}, {label: "я ненавижу, когда мой план рушится.", value: 3}] },
+    { text: "Вы встретили кучу друзей в онлайн-игре, и они приглашают вас встретиться в офлайне. Ваша реакция?", options: [{label: "Разговоры в сети — это одно. Встреча в реале все еще пугает.", value: 1}, {label: "Почему бы и нет. Если кто-то заговорит, я поболтаю.", value: 2}, {label: "Я бы нарядился и увлеченно общался. Никогда не знаешь, правда?", value: 3}] },
+    { text: "Ваш друг приводит одного из своих друзей потусоваться. Ваш наиболее вероятный режим?", options: [{label: "Я инстинктивно держусь на расстоянии от 'друга моего друга'.", value: 1}, {label: "Зависит от них. Если мы сойдемся, то сойдемся.", value: 2}, {label: "Друг моего друга — в принципе мой друг. Давайте общаться!", value: 3}] },
+    { text: "Мои отношения идут с электронным забором. Если люди подходят слишком близко, автоматически срабатывает сигнализация.", options: [{label: "Согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Не согласен", value: 3}] },
+    { text: "Я жажду глубокой близости с людьми, которым доверяю, как будто мы воссоединившиеся давно потерянные родственники.", options: [{label: "Согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Не согласен", value: 3}] },
+    { text: "Иногда у вас явно негативное мнение о чем-то, но вы решаете его не высказывать. Чаще всего, почему?", options: [{label: "Такая ситуация случается нечасто.", value: 1}, {label: "Вероятно, из-за атмосферы, отношений или элементарного такта.", value: 2}, {label: "Я не хочу, чтобы люди знали, что я немного темное создание.", value: 3}] },
+    { text: "Я показываю разные версии себя рядом с разными людьми.", options: [{label: "Не согласен", value: 1}, {label: "Нейтрально", value: 2}, {label: "Согласен", value: 3}] }
+];
+
+// --- БАЗА РЕЗУЛЬТАТОВ ---
+const typesData = {
+    "CTRL": { cn: "Наблюдатель", intro: "Видите? Я уже всё уладил.", desc: "Поздравляем. Вы выбили один из самых редких типов. CTRL-люди выглядят так, будто родились с диспетчером задач, встроенным прямо в нервную систему. То, что обычные люди называют 'правилами', для вас — заводские настройки. Вы архивируете хаос и восстанавливаете правильную версию реальности.", pattern: "HHH-HMH-MHH-HHH-MHM", img: "ctrl.webp" },
+    "ATM-er": { cn: "Ходячий банкомат", intro: "Я правда выгляжу таким богатым?", desc: "Вы тот человек, который всегда 'платит'. Платит своим временем, нервами и терпением. Вы впитываете чужие проблемы, как надежный механизм, выдавая чек с надписью 'Всё нормально, я справлюсь'.", pattern: "HHH-HHM-HHH-HMH-MHL", img: "atm-er.webp" },
+    "Dior-s": { cn: "Мудрец-циник", intro: "Просто дождись моего триумфа.", desc: "Вы духовно заблудившийся наследник самого Диогена. Вы отвергаете амбиции не из-за лени, а потому что видите: финал обычного 'успеха' — это просто более дорогая тюрьма. Вы наслаждаетесь солнцем в бочке собственного изготовления.", pattern: "MHM-MMH-MHM-HMH-LHL", img: "dior-s.jpg" },
+    "BOSS": { cn: "Босс", intro: "Дай руль. Я поведу.", desc: "БОСС тянется к рулю, даже если бак пуст, а навигатор сошел с ума. Вы говорите: 'Я поведу', и машина чудесным образом добирается до цели. Эффективность для вас — не предпочтение, а религия. Порядок — ваш кислород.", pattern: "HHH-HMH-MMH-HHH-LHL", img: "boss.webp" },
+    "THAN-K": { cn: "Благодарный", intro: "Благодарю небеса. Благодарю землю.", desc: "У вас есть сверхъестественная способность превращать раздражение в благодарность. Пробка? Отлично, есть время послушать музыку. Вы как генератор возобновляемой энергии, работающий на изяществе и сострадании.", pattern: "MHM-HMM-HHM-MMH-MHL", img: "than-k.webp" },
+    "OH-NO": { cn: "Паникер", intro: "О нет. За что мне этот тип?!", desc: "Для вас 'о нет' — это не паника, а высшая форма познания. Когда другие видят просто стакан на краю стола, вы видите пролитую воду, замыкание, пожар и апокалипсис. Вы — стражи порядка в мире, который постоянно пытается поскользнуться на банановой кожуре.", pattern: "HHL-LMH-LHH-HHM-LHL", img: "oh-no.webp" },
+    "GOGO": { cn: "Непоседа", intro: "Гоу-гоу! Погнали.", desc: "Вы живете в экстремальной реальности 'что вижу, то и получаю'. Если я закрыл глаза, значит темно; если я стою на переходе, я — пешеход. Безупречная логика. Вы не решаете проблемы, вы просто удаляете их из списка дел.", pattern: "HHM-HMH-MMH-HHH-MHM", img: "gogo.webp" },
+    "SEXY": { cn: "Сердцеед", intro: "Ты рожден быть неотразимым.", desc: "Когда вы входите в комнату, система освещения снижает яркость, потому что вы затмеваете всё. Ваше существование похоже на драматическое эссе, написанное дорогим парфюмом. Время замедляется, чтобы полюбоваться вами.", pattern: "HMH-HHL-HMM-HMM-HLH", img: "sexy.webp" },
+    "LOVE-R": { cn: "Романтик", intro: "Любви так много, что реальность кажется бедной.", desc: "Ваш внутренний процессор работает не в двоичном коде, а в режиме радуги. Опадающий лист для вас — не просто осень, а трагедия о судьбе и безмолвной преданности. Ваш внутренний мир — парк аттракционов, который никогда не закрывается.", pattern: "MLH-LHL-HLH-MLM-MLH", img: "love-r.webp" },
+    "MUM": { cn: "Мамочка", intro: "Может... можно называть тебя мамой...?", desc: "Вы считываете эмоции быстрее всех. Вы знаете, когда остановиться, когда утешить. Вы — природный целитель чужой грусти. Жаль только, что себе вы прописываете гораздо меньшую дозу доброты, чем раздаете остальным.", pattern: "MMH-MHL-HMM-LMM-HLL", img: "mum.webp" },
+    "FAKE": { cn: "Притворщик", intro: "Людей больше не осталось.", desc: "В социуме вы меняете маски быстрее, чем переключаете раскладку клавиатуры. С друзьями один, с боссом — идеальный сотрудник. Ваша маска настолько совершенна, что иногда ночью вы сами боитесь обнаружить, что под ней ничего нет.", pattern: "HLM-MML-MLM-MLM-HLH", img: "fake.webp" },
+    "OJBK": { cn: "Пофигист", intro: "Когда я говорю 'без разницы', я имею в виду именно это.", desc: "Пока смертные сжигают нейроны, решая, что поесть на обед, вы оглядываете эту дилемму и выдаете императорский указ: 'Пофиг'. Это не нерешительность. Это масштаб. Вы просто не спорите с инфузориями о судьбах вселенной.", pattern: "MMH-MMM-HML-LMM-MML", img: "ojbk.webp" },
+    "MALO": { cn: "Хаос (Обезьяна)", intro: "Жизнь — это игра, а я в ней просто мартышка.", desc: "Вы так и не завершили полное обновление до 'взрослого'. Ваш дух все еще висит на дереве, наслаждаясь простой радостью и подозревая цивилизацию. Вы понимаете, что скучные правила созданы для того, чтобы их нарушать, а переговорки — для сальто назад.", pattern: "MLH-MHM-MLH-MLH-LMH", img: "malo.webp" },
+    "JOKE-R": { cn: "Шутник", intro: "Оказывается, мы все клоуны.", desc: "Снимите один слой — там шутка. Снимите еще один — там панчлайн. Если открывать дальше, вы упретесь в пустоту с эхом: 'Ха, не ожидал?'. Вы душа компании, потому что громкий смех — лучший способ скрыть звук внутренней трещины.", pattern: "LLH-LHL-LML-LLL-MLM", img: "joker.jpg" },
+    "WOC!": { cn: "Удивляющийся", intro: "Ого, как я получил этот тип?", desc: "Вы работаете на двух системах: внешняя громко кричит 'Ого! Да ладно?!', а фоновая остается спокойной и не удивленной: 'Всё идет по плану'. Вы не лезете в чужие дела, потому что знаете: спорить с дураком — всё равно что лепить стену из грязи.", pattern: "HHL-HMH-MMH-HHM-LHH", img: "woc.webp" },
+    "THIN-K": { cn: "Мыслитель", intro: "Сеанс глубокого мышления: 100 секунд и продолжается.", desc: "Ваш мозг работает в режиме непрерывного анализа. Информация допрашивается с пристрастием. Когда другие думают, что вы витаете в облаках, на самом деле в вашей голове идет архивирование файлов пугающей сложности.", pattern: "HHL-HMH-MLH-MHM-LHH", img: "thin-k.webp" },
+    "SHIT": { cn: "Мизантроп", intro: "Этот мир — огромная куча дерьма.", desc: "Вы — ходячий парадокс. Рот говорит: 'Этот проект — мусор'. Руки тем временем открывают Excel и строят идеальную таблицу. Рот: 'Ненавижу мир'. Тело: встает в 7 утра и идет спасать этот самый мир, эффективно и с презрением.", pattern: "HHL-HLH-LMM-HHM-LHH", img: "shit.webp" },
+    "ZZZZ": { cn: "Спящий", intro: "Я не умер. Я просто сплю.", desc: "Вы можете проигнорировать 99 сообщений в чате, но когда кто-то пишет 'дедлайн через 30 минут', вы восстаете из гробницы, печатаете 'Принято' и делаете приемлемый результат за 29 минут. Паника — ваше лучшее топливо.", pattern: "MHL-MLH-LML-MML-LHM", img: "zzzz.webp" },
+    "POOR": { cn: "Аскет-специалист", intro: "Я на мели, но сфокусирован.", desc: "Это не про кошелек, это про безжалостное сокращение желаний. Пока другие разбрасывают внимание, вы сжимаете его в лазерный луч. Шум, тщеславие, соцсети? Извините, нет пропускной способности. Зато в важном вы роете, как горнодобывающая машина.", pattern: "HHL-MLH-LMH-HHH-LHL", img: "poor.webp" },
+    "MONK": { cn: "Монах", intro: "Здесь нет мирских желаний.", desc: "Пока другие кричат песни в караоке, вы изучаете высший путь. Личное пространство для вас — это абсолютный барьер, священная гора. Заходить на свой страх и риск. Если планеты могут любить друг друга на расстоянии миллионов километров, почему людям надо дышать прямо в душу?", pattern: "HHL-LLH-LLM-MML-LHM", img: "monk.webp" },
+    "IMSB": { cn: "Самокритик", intro: "Подождите. Серьезно? Я правда такой глупый?", desc: "В вас бьются два воина: один кричит 'Просто сделай это!', другой — 'Идиот, ты опозоришься!'. В итоге вы просто смотрите человеку вслед, а потом гуглите 'как преодолеть социофобию'. Вы не глупый, просто ваша внутренняя киновселенная никогда не выключается.", pattern: "LLM-LMM-LLL-LLL-MLM", img: "imsb.webp" },
+    "SOLO": { cn: "Одиночка", intro: "Я плачу. Как я стал одиночкой?", desc: "Вы держите самооценку низко, а защиту высоко. Вы построили вокруг души длинную стену с надписью 'Не подходи'. Каждый кирпич — это бывшая рана. Ваши шипы — это не только агрессия, это неотправленное сообщение 'Пожалуйста, не уходи'.", pattern: "LML-LLH-LHL-LML-LHM", img: "solo.webp" },
+    "FUCK": { cn: "Бунтарь", intro: "Что это, черт возьми, за тип?", desc: "Где-то внутри цивилизации живет сорняк, который не берет ни один гербицид — это вы. Ваши эмоции — это тумблер между 'ДА, ЧЕРТ ВОЗЬМИ' и 'ОТВАЛИТЕ'. Вы гонитесь не за удовольствием, а за сырой жизненной силой, пробивающей стены.", pattern: "MLL-LHL-LLM-MLL-HLH", img: "fuck.webp" },
+    "DEAD": { cn: "Мертвец (Внутри)", intro: "Я вообще... жив?", desc: "Вы чувствуете себя человеком, который прошел все квесты, перезапустил игру 999 раз и понял, что она изначально не интересна. Ваш спокойный взгляд — это молчаливый и элегантный протест против перегруженного современного цирка.", pattern: "LLL-LLM-LML-LLL-LHM", img: "dead.webp" },
+    "IMFW": { cn: "Хрупкий", intro: "Я правда... такой бесполезный?", desc: "Это не обычная слабость, а гиперчувствительность. У вас тонкие стены и хрупкая гордость. Зато вы мгновенно находите человека с 'самым сильным Wi-Fi сигналом надежности' в комнате. Дайте вам одну конфету, и вы ответите глазами, полными абсолютного доверия.", pattern: "LLH-LHL-LML-LLL-MLL", img: "imfw.webp" },
+    "HHHH": { cn: "Чудак", intro: "Ха-ха-ха-ха-ха.", desc: "Поздравляем! Ваш мыслительный процесс настолько нестандартен, что база данных сломалась. Вы получаете этот тип, потому что ваши ответы — полнейший хаос, и мы искренне не знаем, в какую категорию вас запихнуть. Как вообще так можно было отвечать?", pattern: "NONE", img: "hhhh.webp" }
+};
+
+// --- ЛОГИКА ---
+let currentQuestionIndex = 0;
+let userAnswers = [];
+
+const startScreen = document.getElementById('start-screen');
+const quizScreen = document.getElementById('quiz-screen');
+const resultScreen = document.getElementById('result-screen');
+const questionText = document.getElementById('question-text');
+const optionsContainer = document.getElementById('options-container');
+const progressFill = document.getElementById('progress');
+const questionCounter = document.getElementById('question-counter');
+
+function startTest() {
+    startScreen.classList.add('hidden');
+    quizScreen.classList.remove('hidden');
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const q = questions[currentQuestionIndex];
+    questionText.innerText = q.text;
+    questionCounter.innerText = `Вопрос ${currentQuestionIndex + 1} / 30`;
+    progressFill.style.width = `${((currentQuestionIndex) / questions.length) * 100}%`;
+    
+    optionsContainer.innerHTML = '';
+    q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt.label;
+        btn.onclick = () => handleAnswer(opt.value);
+        optionsContainer.appendChild(btn);
+    });
+}
+
+function handleAnswer(value) {
+    userAnswers.push(value);
+    currentQuestionIndex++;
+    
+    if (currentQuestionIndex < questions.length) {
+        renderQuestion();
+    } else {
+        calculateResult();
+    }
+}
+
+function calculateResult() {
+    let resultString = "";
+    for (let i = 0; i < 15; i++) {
+        let score = userAnswers[i * 2] + userAnswers[i * 2 + 1]; 
+        let letter = score <= 3 ? "L" : (score === 4 ? "M" : "H");
+        resultString += letter;
+        if ((i + 1) % 3 === 0 && i !== 14) resultString += "-";
+    }
+
+    let bestMatchKey = null;
+    let maxMatchScore = 0;
+
+    for (const [key, type] of Object.entries(typesData)) {
+        if (key === "HHHH") continue; 
+        let currentMatchScore = 0;
+        for (let i = 0; i < resultString.length; i++) {
+            if (resultString[i] === type.pattern[i]) currentMatchScore++;
+        }
+        if (currentMatchScore > maxMatchScore) {
+            maxMatchScore = currentMatchScore;
+            bestMatchKey = key;
+        }
+    }
+
+    if (maxMatchScore < 9) bestMatchKey = "HHHH";
+
+    showResult(bestMatchKey);
+}
+
+function showResult(typeKey) {
+    quizScreen.classList.add('hidden');
+    resultScreen.classList.remove('hidden');
+    
+    const type = typesData[typeKey];
+    
+    document.getElementById('res-code').innerText = typeKey;
+    document.getElementById('res-title').innerText = type.cn;
+    document.getElementById('res-intro').innerText = `"${type.intro}"`;
+    document.getElementById('res-desc').innerText = type.desc;
+    document.getElementById('res-img').src = `https://sbti.dev/images/types/${type.img}`;
+
+    // Пытаемся автоматически скопировать код в буфер обмена
+    setTimeout(() => { copyCodeToClipboard(typeKey); }, 300);
+}
+
+// Ручное копирование по клику
+function copyCodeManual() {
+    const codeText = document.getElementById('res-code').innerText;
+    copyCodeToClipboard(codeText, true);
+}
+
+// Функция копирования с показом уведомления "Скопировано!"
+function copyCodeToClipboard(text, isManual = false) {
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('copy-toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }).catch(err => {
+        if(isManual) alert("Не удалось скопировать код автоматически. Пожалуйста, выделите его и скопируйте вручную.");
+        console.error('Ошибка копирования:', err);
+    });
+}
+</script>
+
+</body>
+</html>
