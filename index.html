@@ -67,7 +67,7 @@
             height: 6px;
             background-color: #e4e4e7;
             border-radius: 3px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             overflow: hidden;
         }
         .progress-fill {
@@ -75,6 +75,30 @@
             background-color: var(--primary);
             width: 0%;
             transition: width 0.3s ease;
+        }
+
+        /* Шапка вопроса (Назад + Счетчик) */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            min-height: 24px; /* Чтобы не прыгало, когда скрыта кнопка */
+        }
+        .btn-back {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.2s;
+        }
+        .btn-back:hover { color: var(--primary); }
+        .question-counter {
+            color: var(--text-muted);
+            font-size: 14px;
         }
 
         .question-text {
@@ -116,7 +140,7 @@
         .copy-container {
             margin: 0 auto 20px auto;
             padding: 15px;
-            background-color: #fef08a; /* Ярко-желтый фон для привлечения внимания */
+            background-color: #fef08a;
             border-radius: 12px;
             border: 2px dashed #ca8a04;
             position: relative;
@@ -169,7 +193,7 @@
         }
         .copy-toast.show { opacity: 1; }
 
-        .hidden { display: none !important; }
+        .hidden { display: none !important; visibility: hidden; }
     </style>
 </head>
 <body>
@@ -185,7 +209,13 @@
     <!-- Экран теста -->
     <div id="quiz-screen" class="card hidden">
         <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
-        <div id="question-counter" style="color: #71717a; font-size: 14px; margin-bottom: 10px; text-align: left;">Вопрос 1 / 30</div>
+        
+        <div class="quiz-header">
+            <!-- Кнопка возврата (будет скрыта на 1 вопросе) -->
+            <button id="btn-back" class="btn-back hidden" onclick="goBack()">⬅ Назад</button>
+            <div id="question-counter" class="question-counter">Вопрос 1 / 30</div>
+        </div>
+
         <div id="question-text" class="question-text">Текст вопроса</div>
         <div id="options-container">
             <!-- Кнопки генерируются через JS -->
@@ -195,7 +225,6 @@
     <!-- Экран результата -->
     <div id="result-screen" class="card hidden">
         
-        <!-- НОВЫЙ БЛОК КОПИРОВАНИЯ -->
         <div class="copy-container">
             <span class="copy-label">Это скопировать в Собеку:</span>
             <div class="copy-box" onclick="copyCodeManual()">
@@ -289,6 +318,7 @@ const questionText = document.getElementById('question-text');
 const optionsContainer = document.getElementById('options-container');
 const progressFill = document.getElementById('progress');
 const questionCounter = document.getElementById('question-counter');
+const btnBack = document.getElementById('btn-back');
 
 function startTest() {
     startScreen.classList.add('hidden');
@@ -297,6 +327,13 @@ function startTest() {
 }
 
 function renderQuestion() {
+    // Управление кнопкой "Назад"
+    if (currentQuestionIndex > 0) {
+        btnBack.classList.remove('hidden');
+    } else {
+        btnBack.classList.add('hidden');
+    }
+
     const q = questions[currentQuestionIndex];
     questionText.innerText = q.text;
     questionCounter.innerText = `Вопрос ${currentQuestionIndex + 1} / 30`;
@@ -320,6 +357,15 @@ function handleAnswer(value) {
         renderQuestion();
     } else {
         calculateResult();
+    }
+}
+
+// ФУНКЦИЯ ВОЗВРАТА К ПРЕДЫДУЩЕМУ ВОПРОСУ
+function goBack() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        userAnswers.pop(); // Удаляем последний ответ
+        renderQuestion();
     }
 }
 
@@ -364,17 +410,14 @@ function showResult(typeKey) {
     document.getElementById('res-desc').innerText = type.desc;
     document.getElementById('res-img').src = `https://sbti.dev/images/types/${type.img}`;
 
-    // Пытаемся автоматически скопировать код в буфер обмена
     setTimeout(() => { copyCodeToClipboard(typeKey); }, 300);
 }
 
-// Ручное копирование по клику
 function copyCodeManual() {
     const codeText = document.getElementById('res-code').innerText;
     copyCodeToClipboard(codeText, true);
 }
 
-// Функция копирования с показом уведомления "Скопировано!"
 function copyCodeToClipboard(text, isManual = false) {
     navigator.clipboard.writeText(text).then(() => {
         const toast = document.getElementById('copy-toast');
